@@ -1,0 +1,83 @@
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: true
+
+experimental:
+  otlpLogs: true
+
+api:
+  dashboard: true
+  debug: true
+  #insecure: true # TODO: remove this in production
+
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:   # redirect entire entrypoint to https
+        entryPoint:
+          to: ':443'
+          scheme: https
+  websecure:
+    address: :443
+    http3:
+      advertisedPort: 443
+
+certificatesResolvers:
+  tlschallenge:
+    acme:
+      email: ivasko@fit.vutbr.cz
+      caServer: "https://acme-v02.api.letsencrypt.org/directory"
+      #caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
+      storage: /etc/traefik/acme.json
+      tlsChallenge: {}
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    network: web
+    watch: true
+    exposedByDefault: false
+  file:
+    directory: /etc/traefik/dynamic/
+    watch: true
+
+log:
+  otlp:
+    http:
+      endpoint: http://lgtm:4318/v1/logs
+  level: INFO
+
+accessLog:
+  otlp:
+    http:
+      endpoint: http://lgtm:4318/v1/logs
+  filters:
+    statusCodes:
+      - "200"
+      - "300-302"
+    retryAttempts: true
+    minDuration: "10ms"
+  fields:
+    defaultMode: keep
+    names:
+      ClientUsername: drop
+    headers:
+      defaultMode: keep
+      names:
+        User-Agent: redact
+        Authorization: drop
+        Content-Type: keep
+
+metrics:
+  otlp:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    addRoutersLabels: true
+    http:
+      endpoint: http://lgtm:4318/v1/metrics
+
+tracing:
+  otlp:
+    http:
+      endpoint: http://lgtm:4318/v1/traces

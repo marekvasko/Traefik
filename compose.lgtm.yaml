@@ -1,0 +1,28 @@
+#docker run -p 3000:3000 -p 4317:4317 -p 4318:4318 --rm -ti grafana/otel-lgtm
+
+services:
+  lgtm:
+    restart: always
+    image: grafana/otel-lgtm:latest
+    ports:
+      #- "3000:3000" # Port for the LGTM web interface
+      - "4317:4317" # Port for OTLP gRPC receiver
+      - "4318:4318" # Port for OTLP HTTP receiver
+    volumes:
+      - /mnt/hdd/Data/LGTM:/data # Persistent storage for LGTM data
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.lgtm.rule=Host(`lgtm.capturemyhand.com`)
+      - traefik.http.routers.lgtm.entrypoints=websecure
+      - traefik.http.routers.lgtm.tls.certresolver=tlschallenge
+      - traefik.http.services.lgtm.loadbalancer.server.port=3000 # Adjust if LGTM uses a different port internally
+      - traefik.http.routers.lgtm.middlewares=trafik-dashboard-auth@file
+    networks:
+      - logging
+      - web
+
+networks:
+  logging:
+    external: true
+  web:
+    external: true

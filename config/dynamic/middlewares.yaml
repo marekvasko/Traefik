@@ -1,0 +1,9 @@
+# Declaring the user list
+http:
+  middlewares:
+    trafik-dashboard-auth:
+      basicAuth:
+        usersFile: /etc/traefik/authusers.txt
+        #users:
+        #  - "marek:$apr1$tSNeVbAh$b9iA2VAZ1L07gx1x2BMrJ." # marek:marek
+        removeHeader: true
