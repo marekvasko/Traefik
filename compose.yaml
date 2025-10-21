@@ -1,21 +1,37 @@
 services:
+  tailscale:
+    restart: always
+    image: tailscale/tailscale:latest
+    hostname: capturemyhand
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+    #  - TS_AUTHKEY=tskey-client-notAReal-OAuthClientSecret1Atawk
+    #  - TS_EXTRA_ARGS=--advertise-tags=tag:container
+    #  - TS_USERSPACE=false
+    volumes:
+      - ./tailscale-nginx/state:/var/lib/tailscale
+    #devices:
+    #  - /dev/net/tun:/dev/net/tun
+    networks:
+      - web
+      - logging
+    ports:
+      - 80:80
+      - 443:443
+    #cap_add:
+    #  - net_admin
   reverse-proxy:
     restart: always
     # The official v3 Traefik docker image
     image: traefik:latest
     # Enables the web UI and tells Traefik to listen to docker
-    ports:
-      - 80:80
-      - 443:443
     volumes:
       - ${XDG_RUNTIME_DIR}/docker.sock:/var/run/docker.sock
       - ./config/traefik.yaml:/etc/traefik/traefik.yaml:ro
       - ./config/dynamic/:/etc/traefik/dynamic/:ro
       - ./config/authusers.txt:/etc/traefik/authusers.txt:ro
       - ./config/acme.json:/etc/traefik/acme.json
-    networks:
-      - web
-      - logging
+    network_mode: "service:tailscale"
     labels:
       - traefik.enable=true
       - traefik.http.routers.traefik.rule=Host(`traefik.capturemyhand.com`)

@@ -1,0 +1,14 @@
+http:
+  routers:
+    my-router:
+      rule: "Host(`homelab.spis-ai.com`)"
+      service: homelab
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: tlschallenge
+  services:
+    homelab:
+      loadBalancer:
+        servers:
+          - url: "http://homelab.tail754377.ts.net:8080"
